@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaukGPT - AI-Powered Q&A</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <div class="logo">🤖</div>
+                <h1>LaukGPT</h1>
+            </div>
+            <p class="subtitle">Your AI-powered question & answer assistant</p>
+            <nav>
+                <a href="/admin" class="nav-link">Admin Panel →</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Question Submission Form -->
+            <section class="card">
+                <h2>💬 Ask LaukGPT</h2>
+                <form hx-post="/api/questions" 
+                      hx-target="#form-response" 
+                      hx-swap="innerHTML"
+                      hx-on::after-request="if(event.detail.successful) { this.reset(); htmx.trigger('#answered-questions', 'newQuestion'); }">
+                    <div class="form-group">
+                        <label for="question">Your Question:</label>
+                        <textarea 
+                            id="question" 
+                            name="question" 
+                            rows="4" 
+                            placeholder="Ask me anything... I'm here to help!"
+                            required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">🚀 Submit Question</button>
+                </form>
+                <div id="form-response" class="response-area"></div>
+            </section>
+
+            <!-- View Answered Questions -->
+            <section class="card">
+                <div class="section-header">
+                    <h2>✨ LaukGPT Answers</h2>
+                    <button 
+                        hx-get="/api/my-questions" 
+                        hx-target="#answered-questions" 
+                        hx-swap="innerHTML"
+                        class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="answered-questions" 
+                     hx-get="/api/my-questions" 
+                     hx-trigger="load, every 5s, newQuestion"
+                     hx-swap="innerHTML">
+                    <div class="loading">🤖 Loading your answers...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by LaukGPT 🚀 | Your intelligent assistant is always learning</p>
+        </footer>
+    </div>
+</body>
+</html>

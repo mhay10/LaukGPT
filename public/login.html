@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaukGPT Admin - Login</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="container login-container">
+        <div class="login-card">
+            <header class="login-header">
+                <div class="logo-section">
+                    <div class="logo">🤖</div>
+                    <h1>LaukGPT Admin</h1>
+                </div>
+                <p class="subtitle">Secure access to the control panel</p>
+            </header>
+
+            <div class="card">
+                <form hx-post="/api/admin/login" 
+                      hx-target="#login-response" 
+                      hx-swap="innerHTML">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               required 
+                               autocomplete="username"
+                               placeholder="Enter your username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               required 
+                               autocomplete="current-password"
+                               placeholder="Enter your password">
+                    </div>
+
+                    <div id="login-response" class="response-area"></div>
+
+                    <button type="submit" class="btn btn-primary btn-full-width">
+                        🔓 Login
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <a href="/" class="nav-link">← Back to LaukGPT</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>LaukGPT Admin Access 🔒 | Authorized personnel only</p>
+    </footer>
+</body>
+</html>

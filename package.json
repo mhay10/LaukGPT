@@ -1,0 +1,46 @@
+{
+  "name": "htmx-qa-system",
+  "version": "1.0.0",
+  "description": "Q&A system with HTMX where users ask questions and admins answer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "clear-db": "node scripts/clear-db.js",
+    "build": "pkg . --compress Brotli --output dist/LaukGPT",
+    "build:win": "pkg . --targets node18-win-x64 --compress Brotli --output dist/LaukGPT",
+    "build:linux": "pkg . --targets node18-linux-x64 --compress Brotli --output dist/LaukGPT",
+    "build:mac": "pkg . --targets node18-macos-x64 --compress Brotli --output dist/LaukGPT"
+  },
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "config/**/*",
+      "database/**/*",
+      "middleware/**/*",
+      "routes/**/*",
+      "utils/**/*",
+      "scripts/**/*",
+      "node_modules/sql.js/dist/*.wasm"
+    ],
+    "outputPath": "dist"
+  },
+  "keywords": [
+    "htmx",
+    "express",
+    "qa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "express-session": "^1.18.2",
+    "sql.js": "^1.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "pkg": "^5.8.1"
+  }
+}

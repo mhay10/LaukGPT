@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaukGPT - Admin Control Panel</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="container admin-panel">
+        <header>
+            <div class="admin-header-controls">
+                <div>
+                    <div class="logo-section">
+                        <div class="logo">🤖</div>
+                        <h1>LaukGPT Control Panel</h1>
+                    </div>
+                    <p class="subtitle">Manage and respond to user queries</p>
+                </div>
+                <a href="/api/admin/logout" class="logout-btn">🚪 Logout</a>
+            </div>
+            <nav>
+                <a href="/" class="nav-link">← Back to LaukGPT</a>
+            </nav>
+        </header>
+
+        <main>
+            <!-- Pending Questions Section -->
+            <section class="card">
+                <div class="section-header">
+                    <h2>⏳ Awaiting Response</h2>
+                    <button 
+                        hx-get="/api/admin/pending-questions" 
+                        hx-target="#pending-questions" 
+                        hx-swap="innerHTML"
+                        class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="pending-questions" 
+                     hx-get="/api/admin/pending-questions" 
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <div class="loading">🤖 Loading pending questions...</div>
+                </div>
+            </section>
+
+            <!-- Answered Questions Section -->
+            <section class="card">
+                <div class="section-header">
+                    <h2>✅ Resolved Queries</h2>
+                    <button 
+                        hx-get="/api/admin/answered-questions" 
+                        hx-target="#answered-questions" 
+                        hx-swap="innerHTML"
+                        class="btn btn-secondary">
+                        🔄 Refresh
+                    </button>
+                </div>
+                <div id="answered-questions" 
+                     hx-get="/api/admin/answered-questions" 
+                     hx-trigger="load, answeredQuestion from:body"
+                     hx-swap="innerHTML">
+                    <div class="loading">🤖 Loading resolved queries...</div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>LaukGPT Admin Panel 🛠️ | Empowering users with intelligent answers</p>
+        </footer>
+    </div>
+</body>
+</html>
