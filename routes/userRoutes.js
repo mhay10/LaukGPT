@@ -12,8 +12,14 @@ router.post('/questions', (req, res) => {
         return res.status(400).send('<div class="error">Please enter a question</div>');
     }
     
-    const questionId = createQuestion(question);
-    
+    let questionId;
+    try {
+        questionId = createQuestion(question);
+    } catch (err) {
+        console.error('Error creating question:', err);
+        return res.status(500).send('<div class="error">An error occurred while submitting your question. Please try again later.</div>');
+    }
+
     res.send(`
         <div class="success-message">
             Question submitted successfully! Your question ID is #${questionId}

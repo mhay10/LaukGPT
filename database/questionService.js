@@ -4,16 +4,38 @@ const { getDatabase, saveDatabase } = require('./db');
  * Create a new question
  */
 function createQuestion(questionText) {
+    if (!questionText || questionText.trim() === '') {
+        throw new Error('Question text is required');
+    }
+
     const db = getDatabase();
     const timestamp = new Date().toISOString();
-    
-    db.run('INSERT INTO questions (question, timestamp) VALUES (?, ?)', [questionText.trim(), timestamp]);
-    saveDatabase();
-    
-    const result = db.exec('SELECT last_insert_rowid() as id')[0];
-    const lastId = result.values[0][0];
-    
-    return lastId;
+
+    try {
+        console.log('createQuestion: inserting question', { preview: questionText.trim().slice(0, 120) });
+        db.run('INSERT INTO questions (question, timestamp) VALUES (?, ?)', [questionText.trim(), timestamp]);
+        saveDatabase();
+
+        // Robustly fetch the most recently inserted id
+        const results = db.exec('SELECT id FROM questions ORDER BY id DESC LIMIT 1');
+        console.log('createQuestion: SELECT id results:', results);
+
+        if (!results || !results[0] || !results[0].values || results[0].values.length === 0) {
+            throw new Error('Failed to retrieve last insert id via SELECT');
+        }
+
+        const lastIdRaw = results[0].values[0][0];
+        const lastId = Number(lastIdRaw);
+        if (Number.isNaN(lastId) || lastId <= 0) {
+            throw new Error('Invalid last insert id: ' + String(lastIdRaw));
+        }
+
+        console.log('createQuestion: new question id =', lastId);
+        return lastId;
+    } catch (err) {
+        console.error('createQuestion error:', err);
+        throw err;
+    }
 }
 
 /**
