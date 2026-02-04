@@ -4,7 +4,8 @@ const {
     getPendingQuestions, 
     getAnsweredQuestions, 
     getQuestionById,
-    answerQuestion 
+    answerQuestion,
+    answerQuestionWithImage
 } = require('../database/questionService');
 const { 
     renderPendingQuestion, 
@@ -67,6 +68,41 @@ router.post('/admin/answer/:id', requireAuth, (req, res) => {
                '</div>';
     }
     
+    // Trigger refresh of answered questions section
+    res.setHeader('HX-Trigger', 'answeredQuestion');
+    res.send(html);
+});
+
+// Submit an image answer (admin draws in browser and submits data URL)
+router.post('/admin/answer-image/:id', requireAuth, (req, res) => {
+    const questionId = parseInt(req.params.id);
+    const { image_data, answer } = req.body;
+
+    // Check if question exists
+    const question = getQuestionById(questionId);
+    if (!question) {
+        return res.status(404).send('<div class="error">Question not found</div>');
+    }
+
+    if (!image_data || image_data.trim() === '') {
+        return res.status(400).send('<div class="error">No image received</div>');
+    }
+
+    // Update the question with the image and optional answer text
+    answerQuestionWithImage(questionId, image_data, answer || '');
+
+    // Return updated pending questions list
+    const pendingQuestions = getPendingQuestions();
+    
+    let html;
+    if (pendingQuestions.length === 0) {
+        html = '<div id="pending-questions"><div class="no-data">No pending questions</div></div>';
+    } else {
+        html = '<div id="pending-questions">' + 
+               pendingQuestions.map(q => renderPendingQuestion(q)).join('') + 
+               '</div>';
+    }
+
     // Trigger refresh of answered questions section
     res.setHeader('HX-Trigger', 'answeredQuestion');
     res.send(html);

@@ -13,7 +13,7 @@ LaukGPT/
 │   └── questionService.js       # Question CRUD operations and business logic
 ├── middleware/
 │   └── auth.js                  # Authentication middleware
-├── routes/
+├── routes/I
 │   ├── pageRoutes.js            # HTML page routes (/, /login, /admin)
 │   ├── authRoutes.js            # Authentication API routes (login, logout)
 │   ├── userRoutes.js            # User-facing API routes (submit/view questions)
@@ -75,6 +75,15 @@ npm run dev
 - **User Page:** http://localhost:3000
 - **Admin Page:** http://localhost:3000/admin
   - Default credentials: `admin` / `admin123`
+
+## Image requests & admin drawing 🖼️
+
+- Users can now request an image by checking "Request an image" when submitting a question on the main page.
+- Image requests appear in the admin panel with an inline drawing canvas where admins can draw directly in the browser and submit the result.
+- Admins may optionally add a caption/description when submitting an image. Submitted images are stored in the `image_data` column as a data URL.
+
+**Notes:**
+- For production or heavy usage consider storing images as files or using object storage (S3, CDN) and save references in the DB instead of storing large data URLs in the SQLite DB.
 
 ## Environment Variables
 

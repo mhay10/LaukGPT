@@ -3,7 +3,7 @@ const { getDatabase, saveDatabase } = require('./db');
 /**
  * Create a new question
  */
-function createQuestion(questionText) {
+function createQuestion(questionText, type = 'text') {
     if (!questionText || questionText.trim() === '') {
         throw new Error('Question text is required');
     }
@@ -12,8 +12,8 @@ function createQuestion(questionText) {
     const timestamp = new Date().toISOString();
 
     try {
-        console.log('createQuestion: inserting question', { preview: questionText.trim().slice(0, 120) });
-        db.run('INSERT INTO questions (question, timestamp) VALUES (?, ?)', [questionText.trim(), timestamp]);
+        console.log('createQuestion: inserting question', { preview: questionText.trim().slice(0, 120), type });
+        db.run('INSERT INTO questions (question, timestamp, type) VALUES (?, ?, ?)', [questionText.trim(), timestamp, type]);
         saveDatabase();
 
         // Robustly fetch the most recently inserted id
@@ -43,7 +43,8 @@ function createQuestion(questionText) {
  */
 function getAnsweredQuestions() {
     const db = getDatabase();
-    const results = db.exec('SELECT * FROM questions WHERE answer IS NOT NULL ORDER BY answered_at DESC');
+    // Consider a question answered if it has either a text answer or an image
+    const results = db.exec("SELECT * FROM questions WHERE answer IS NOT NULL OR image_data IS NOT NULL ORDER BY COALESCE(answered_at, timestamp) DESC");
     
     if (!results.length || results[0].values.length === 0) {
         return [];
@@ -57,13 +58,38 @@ function getAnsweredQuestions() {
  */
 function getPendingQuestions() {
     const db = getDatabase();
-    const results = db.exec('SELECT * FROM questions WHERE answer IS NULL ORDER BY timestamp ASC');
+    // Pending = no text answer AND no image_data
+    const results = db.exec("SELECT * FROM questions WHERE answer IS NULL AND image_data IS NULL ORDER BY timestamp ASC");
     
     if (!results.length || results[0].values.length === 0) {
         return [];
     }
     
     return resultsToObjects(results[0]);
+}
+
+/**
+ * Answer a question
+ */
+function answerQuestion(questionId, answerText) {
+    const db = getDatabase();
+    const answeredAt = new Date().toISOString();
+    
+    db.run('UPDATE questions SET answer = ?, answered_at = ? WHERE id = ?', 
+        [answerText.trim(), answeredAt, questionId]);
+    saveDatabase();
+}
+
+/**
+ * Answer a question with an image (image_data should be a data URL)
+ */
+function answerQuestionWithImage(questionId, imageData, answerText = '') {
+    const db = getDatabase();
+    const answeredAt = new Date().toISOString();
+
+    db.run('UPDATE questions SET image_data = ?, answer = ?, answered_at = ? WHERE id = ?',
+        [imageData, (answerText || '').trim(), answeredAt, questionId]);
+    saveDatabase();
 }
 
 /**
@@ -112,5 +138,6 @@ module.exports = {
     getAnsweredQuestions,
     getPendingQuestions,
     getQuestionById,
-    answerQuestion
+    answerQuestion,
+    answerQuestionWithImage
 };

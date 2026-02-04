@@ -6,23 +6,27 @@ const router = express.Router();
 
 // Submit a new question
 router.post('/questions', (req, res) => {
-    const { question } = req.body;
+    const { question, isImage } = req.body;
     
     if (!question || question.trim() === '') {
         return res.status(400).send('<div class="error">Please enter a question</div>');
     }
     
+    const type = (isImage === 'on' || isImage === 'true') ? 'image' : 'text';
+
     let questionId;
     try {
-        questionId = createQuestion(question);
+        questionId = createQuestion(question, type);
     } catch (err) {
         console.error('Error creating question:', err);
         return res.status(500).send('<div class="error">An error occurred while submitting your question. Please try again later.</div>');
     }
 
+    const message = type === 'image' ? 'Image request submitted' : 'Question submitted successfully';
+
     res.send(`
         <div class="success-message">
-            Question submitted successfully! Your question ID is #${questionId}
+            ${message}! Your question ID is #${questionId}
         </div>
     `);
 });

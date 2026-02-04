@@ -116,9 +116,87 @@ nav {
 .form-group label {
     display: block;
     font-weight: 600;
-    margin-bottom: 8px;
     color: #e0e0e0;
 }
+
+/* Image request toggle (prominent above textbox) */
+.image-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    height: fit-content
+}
+
+/* The accessible switch label wraps the checkbox */
+.image-switch {
+    display: flex; /* inline to sit naturally with surrounding text */
+    /* flex-direction: column; */
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    flex-wrap: nowrap;
+}
+
+.image-switch input[type='checkbox'] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.switch-track {
+    width: 52px;
+    height: 30px;
+    background: linear-gradient(180deg, #2a2a2a, #222);
+    border-radius: 999px;
+    display:block;
+    position: relative;
+    transition: background 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+.switch-thumb {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 200ms cubic-bezier(.2,.9,.2,1), box-shadow 200ms;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+
+/* When checked, move thumb and change track color */
+.image-switch input:checked + .switch-track {
+    background: linear-gradient(90deg, #ff7a59, #dc2626);
+    box-shadow: 0 6px 18px rgba(220,38,38,0.25);
+}
+
+.image-switch input:checked + .switch-track .switch-thumb {
+    transform: translateX(22px);
+}
+
+.image-toggle-label {
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap; /* keep the label text on a single line */
+}
+
+/* Small-screen adjustments */
+@media (max-width: 520px) {
+    /* Keep switch and label on the same line on small screens */
+    .image-toggle { flex-direction: row; align-items: center; gap: 8px; flex-wrap: nowrap; }
+} 
+
 
 textarea {
     width: 100%;
@@ -142,12 +220,20 @@ textarea:focus {
 /* Buttons */
 .btn {
     padding: 12px 24px;
-    border: none;
+    border: 2px solid rgba(255,255,255,0.06);
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    background-clip: padding-box;
+}
+
+.btn:focus,
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(220,38,38,0.12);
+    border-color: rgba(220,38,38,0.6);
 }
 
 .btn-primary {
@@ -160,6 +246,21 @@ textarea:focus {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+/* Ensure submit button width is consistent between text and image modes */
+.card form .btn[type="submit"] {
+    width: 220px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Make button full-width on small screens */
+@media (max-width: 520px) {
+    .card form .btn[type="submit"] {
+        width: 100%;
+    }
 }
 
 .btn-secondary {
@@ -287,8 +388,119 @@ textarea:focus {
     border-top: 2px dashed #3a3a3a;
 }
 
-.answer-form textarea {
-    margin-bottom: 10px;
+/* Drawing controls */
+.drawing-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.drawing-controls .tool-group {
+    display: flex;
+    gap: 8px;
+}
+
+.drawing-controls .tool-btn {
+    padding: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #222, #2a2a2a);
+    border: 2px solid rgba(255,255,255,0.06);
+    color: #ffffff;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+.drawing-controls .tool-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(220,38,38,0.5);
+    box-shadow: 0 8px 20px rgba(220,38,38,0.08), inset 0 -2px 6px rgba(0,0,0,0.4);
+}
+
+.drawing-controls .tool-btn:focus,
+.drawing-controls .tool-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(220,38,38,0.18);
+    border-color: #dc2626;
+}
+
+.drawing-controls .tool-btn.active {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    box-shadow: 0 6px 18px rgba(220,38,38,0.25);
+    border-color: #8b0000;
+}
+
+.drawing-controls .tool-btn .emoji-icon {
+    display: block;
+    font-size: 20px;
+    line-height: 1;
+    transform: translateY(-1px); /* visually center emoji */
+    pointer-events: none;
+}
+
+.drawing-controls .control-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e0e0e0;
+}
+
+.drawing-controls input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 40px;
+    height: 34px;
+    padding: 0;
+    border-radius: 8px;
+    border: 2px solid #3a3a3a;
+    background: transparent;
+    cursor: pointer;
+}
+.drawing-controls input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 6px;
+}
+.drawing-controls input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+.drawing-controls input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+.drawing-controls input[type="color"]:focus,
+.drawing-controls input[type="color"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(220,38,38,0.12);
+    border-color: rgba(220,38,38,0.6);
+}
+
+.drawing-controls input[type="range"] {
+    accent-color: #dc2626;
+    width: 160px;
+}
+
+.canvas-wrap canvas {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+    background: #ffffff;
+    display: block;
+}
+
+
+.answer-form textarea,
+.answer-image-form textarea {
+    margin-bottom: 12px;
 }
 
 /* Footer */
@@ -398,6 +610,33 @@ input[type="password"]:focus {
     font-weight: 500;
     transition: background 0.3s;
 }
+
+/* Image and canvas styles for image requests */
+.canvas-wrap {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 12px 0;
+}
+.canvas-wrap canvas {
+    width: 100%;
+    height: 400px;
+    display: block;
+    touch-action: none;
+}
+.image-answer img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display:block;
+}
+.drawing-controls {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top: 8px;
+}
+
 
 .logout-btn:hover {
     background: #b91c1c;
