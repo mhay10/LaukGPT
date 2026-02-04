@@ -7,8 +7,88 @@ document.addEventListener('DOMContentLoaded', () => {
     const sizeInput = form.querySelector('.brush-size');
     const clearBtn = form.querySelector('.clear-canvas');
     const saveBtn = form.querySelector('.save-image');
+    const undoBtn = form.querySelector('.undo-canvas');
+    const redoBtn = form.querySelector('.redo-canvas');
     const hiddenInput = form.querySelector('input[name="image_data"]');
     const toolButtons = form.querySelectorAll('.tool-btn');
+
+    // Undo/Redo history (store data URLs). Limit to avoid memory bloat.
+    const HISTORY_LIMIT = 50;
+    let undoStack = [];
+    let redoStack = [];
+
+    function updateHistoryButtons() {
+      if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+      if (redoBtn) redoBtn.disabled = redoStack.length === 0;
+    }
+
+    function saveState() {
+      try {
+        const current = canvas.toDataURL();
+        if (!current) return;
+        if (undoStack.length && undoStack[undoStack.length - 1] === current) return;
+        undoStack.push(current);
+        if (undoStack.length > HISTORY_LIMIT) undoStack.shift();
+        // New action invalidates redo history
+        redoStack = [];
+        updateHistoryButtons();
+      } catch (err) {
+        console.warn('saveState failed', err);
+      }
+    }
+
+    function restoreFromDataUrl(dataUrl) {
+      if (!dataUrl) return;
+      const img = new Image();
+      img.onload = () => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width / lastDpi, canvas.height / lastDpi);
+        ctx.drawImage(img, 0, 0, canvas.width / lastDpi, canvas.height / lastDpi);
+      };
+      img.src = dataUrl;
+    }
+
+    function doUndo() {
+      if (!undoStack.length) return;
+      try {
+        const current = canvas.toDataURL();
+        const last = undoStack.pop();
+        redoStack.push(current);
+        restoreFromDataUrl(last);
+        updateHistoryButtons();
+      } catch (err) { console.warn('undo failed', err); }
+    }
+
+    function doRedo() {
+      if (!redoStack.length) return;
+      try {
+        const current = canvas.toDataURL();
+        const next = redoStack.pop();
+        undoStack.push(current);
+        restoreFromDataUrl(next);
+        updateHistoryButtons();
+      } catch (err) { console.warn('redo failed', err); }
+    }
+
+    if (undoBtn) undoBtn.addEventListener('click', doUndo);
+    if (redoBtn) redoBtn.addEventListener('click', doRedo);
+
+    // Keyboard shortcuts when this form is focused: Ctrl/Cmd+Z and Ctrl/Cmd+Y (or Shift+Ctrl+Z)
+    form.addEventListener('keydown', (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      if (e.key === 'z' || e.key === 'Z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          doRedo();
+        } else {
+          doUndo();
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        doRedo();
+      }
+    });
 
     // Setup drawing state
     let drawing = false;
@@ -44,6 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Simple stack-based flood fill using image data (coordinates in CSS pixels)
     function bucketFillAt(xCss, yCss) {
+      // Save a state so bucket fill can be undone
+      saveState();
       const w = canvas.width;
       const h = canvas.height;
       const x = Math.floor(xCss * lastDpi);
@@ -114,8 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
         img.onload = () => {
           ctx.drawImage(img, 0, 0, canvas.width / dpi, canvas.height / dpi);
+          // capture restored drawing into history
+          saveState();
         };
         img.src = oldData;
+      } else {
+        // nothing to restore — capture the blank canvas state
+        saveState();
       }
     }
 
@@ -136,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bucketFillAt(x, y);
         return;
       }
+      // Save state BEFORE a stroke so the stroke can be undone
+      saveState();
       drawing = true;
       lastX = x; lastY = y;
     }
@@ -164,13 +253,31 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.addEventListener('mousedown', start);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stop);
-    canvas.addEventListener('mouseout', stop);
+
+    // Don't stop on mouseout so users can re-enter and resume drawing.
+    // Instead, resume drawing when re-entering while the primary button is pressed,
+    // and listen for global mouseup to stop if release happens outside the canvas.
+    canvas.addEventListener('mouseenter', (e) => {
+      try {
+        if (e.buttons && (e.buttons & 1)) {
+          const [x, y] = getPos(e);
+          lastX = x; lastY = y;
+          drawing = true;
+        }
+      } catch (err) { /* ignore */ }
+    });
+
+    window.addEventListener('mouseup', stop);
 
     canvas.addEventListener('touchstart', start, { passive: false });
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stop);
+    // Touch may be cancelled (e.g., system gestures); ensure drawing stops
+    canvas.addEventListener('touchcancel', stop);
 
     clearBtn.addEventListener('click', () => {
+      // Save previous state so the Clear action can be undone
+      saveState();
       // Paint a white background to replace transparency
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width / lastDpi, canvas.height / lastDpi);

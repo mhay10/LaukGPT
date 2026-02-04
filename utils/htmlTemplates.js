@@ -66,6 +66,8 @@ function renderPendingQuestion(question) {
                     </div>
                     <label class="control-item">Brush: <input type="range" min="1" max="30" value="4" class="brush-size"></label>
                     <label class="control-item">Color: <input type="color" value="#000000" class="brush-color"></label>
+                    <button type="button" class="btn btn-secondary undo-canvas" title="Undo" aria-label="Undo">↶</button>
+                    <button type="button" class="btn btn-secondary redo-canvas" title="Redo" aria-label="Redo">↷</button>
                     <button type="button" class="btn btn-secondary clear-canvas">Clear</button>
                 </div>
 
