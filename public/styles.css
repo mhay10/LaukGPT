@@ -637,6 +637,37 @@ input[type="password"]:focus {
     margin-top: 8px;
 }
 
+.drawing-controls .import-trace-image,
+.drawing-controls .remove-trace-image {
+    min-width: 130px;
+}
+
+.drawing-controls .remove-trace-image:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.canvas-wrap {
+    position: relative;
+}
+
+.canvas-wrap .trace-image {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100px;
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 2;
+    user-select: none;
+}
+
+.canvas-wrap canvas {
+    position: relative;
+    z-index: 1;
+}
+
 
 .logout-btn:hover {
     background: #b91c1c;

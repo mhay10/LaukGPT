@@ -13,6 +13,7 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = config.port;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Determine the correct path for static files (pkg compatibility)
 const publicPath = path.join(__dirname, 'public');
@@ -30,11 +31,17 @@ app.use('/api', userRoutes);
 app.use('/api', adminRoutes);
 
 // Start server
-initDatabase().then(() => {
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-        console.log(`User page: http://localhost:${PORT}`);
-        console.log(`Admin page: http://localhost:${PORT}/admin`);
-        console.log(`Database: SQLite (${dbPath})`);
+initDatabase()
+    .then(() => {
+        app.listen(PORT, HOST, () => {
+            console.log(`Server is running on http://${HOST}:${PORT}`);
+            console.log(`User page: http://localhost:${PORT}`);
+            console.log(`Admin page: http://localhost:${PORT}/admin`);
+            console.log(`Database: SQLite (${dbPath})`);
+        });
+    })
+    .catch((err) => {
+        console.error('Failed to initialize database. Server did not start.');
+        console.error(err);
+        process.exit(1);
     });
-});

@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const redoBtn = form.querySelector('.redo-canvas');
     const hiddenInput = form.querySelector('input[name="image_data"]');
     const toolButtons = form.querySelectorAll('.tool-btn');
+    const traceImage = form.querySelector('.trace-image');
+    const traceImageInput = form.querySelector('.trace-image-input');
+    const importTraceBtn = form.querySelector('.import-trace-image');
+    const removeTraceBtn = form.querySelector('.remove-trace-image');
 
     // Undo/Redo history (store data URLs). Limit to avoid memory bloat.
     const HISTORY_LIMIT = 50;
@@ -46,6 +50,71 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.drawImage(img, 0, 0, canvas.width / lastDpi, canvas.height / lastDpi);
       };
       img.src = dataUrl;
+    }
+
+    function clearTraceImage() {
+      if (!traceImage) return;
+      traceImage.removeAttribute('src');
+      traceImage.hidden = true;
+      draggingImage = false;
+      traceState.x = 0;
+      traceState.y = 0;
+      traceState.width = 0;
+      traceState.height = 0;
+      if (currentTool === 'move') {
+        canvas.style.cursor = 'not-allowed';
+      }
+      if (traceImageInput) {
+        traceImageInput.value = '';
+      }
+      if (removeTraceBtn) {
+        removeTraceBtn.disabled = true;
+      }
+    }
+
+    function setTraceImage(dataUrl) {
+      if (!traceImage || !dataUrl) return;
+      traceImage.onload = () => {
+        fitTraceImage();
+        if (currentTool === 'move') {
+          canvas.style.cursor = 'grab';
+        }
+      };
+      traceImage.src = dataUrl;
+      traceImage.hidden = false;
+      if (removeTraceBtn) {
+        removeTraceBtn.disabled = false;
+      }
+    }
+
+    if (importTraceBtn && traceImageInput) {
+      importTraceBtn.addEventListener('click', () => {
+        traceImageInput.click();
+      });
+    }
+
+    if (traceImageInput) {
+      traceImageInput.addEventListener('change', () => {
+        const file = traceImageInput.files && traceImageInput.files[0];
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('image/')) {
+          traceImageInput.value = '';
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result;
+          if (typeof result === 'string' && result.startsWith('data:image/')) {
+            setTraceImage(result);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (removeTraceBtn) {
+      removeTraceBtn.addEventListener('click', clearTraceImage);
     }
 
     function doUndo() {
@@ -92,9 +161,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup drawing state
     let drawing = false;
+    let draggingImage = false;
     let lastX = 0;
     let lastY = 0;
-    let currentTool = 'brush'; // 'brush' | 'bucket' | 'eraser'
+    let currentTool = 'brush'; // 'brush' | 'bucket' | 'eraser' | 'move'
+    const traceState = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    };
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragOriginX = 0;
+    let dragOriginY = 0;
+
+    function applyTraceLayout() {
+      if (!traceImage || traceImage.hidden) return;
+      traceImage.style.left = `${traceState.x}px`;
+      traceImage.style.top = `${traceState.y}px`;
+      traceImage.style.width = `${traceState.width}px`;
+      traceImage.style.height = `${traceState.height}px`;
+    }
+
+    function fitTraceImage() {
+      if (!traceImage || traceImage.hidden || !traceImage.naturalWidth || !traceImage.naturalHeight) return;
+      const area = canvas.getBoundingClientRect();
+      const scale = Math.min(area.width / traceImage.naturalWidth, area.height / traceImage.naturalHeight);
+      traceState.width = Math.max(1, traceImage.naturalWidth * scale);
+      traceState.height = Math.max(1, traceImage.naturalHeight * scale);
+      traceState.x = (area.width - traceState.width) / 2;
+      traceState.y = (area.height - traceState.height) / 2;
+      applyTraceLayout();
+    }
 
     // Tool selection handler
     toolButtons.forEach(btn => {
@@ -104,6 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTool = btn.dataset.tool || 'brush';
         if (currentTool === 'bucket') {
           canvas.style.cursor = 'cell';
+        } else if (currentTool === 'move') {
+          canvas.style.cursor = traceImage && !traceImage.hidden ? 'grab' : 'not-allowed';
         } else if (currentTool === 'eraser') {
           canvas.style.cursor = 'crosshair';
         } else {
@@ -204,6 +305,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // nothing to restore — capture the blank canvas state
         saveState();
       }
+
+      // Keep the tracing image aligned with responsive canvas dimensions.
+      fitTraceImage();
     }
 
     fixDpi();
@@ -223,6 +327,16 @@ document.addEventListener('DOMContentLoaded', () => {
         bucketFillAt(x, y);
         return;
       }
+      if (currentTool === 'move') {
+        if (!traceImage || traceImage.hidden) return;
+        draggingImage = true;
+        dragStartX = x;
+        dragStartY = y;
+        dragOriginX = traceState.x;
+        dragOriginY = traceState.y;
+        canvas.style.cursor = 'grabbing';
+        return;
+      }
       // Save state BEFORE a stroke so the stroke can be undone
       saveState();
       drawing = true;
@@ -230,6 +344,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function draw(e) {
+      if (draggingImage && currentTool === 'move') {
+        e.preventDefault();
+        const [x, y] = getPos(e);
+        traceState.x = dragOriginX + (x - dragStartX);
+        traceState.y = dragOriginY + (y - dragStartY);
+        applyTraceLayout();
+        return;
+      }
       if (!drawing) return;
       e.preventDefault();
       const [x, y] = getPos(e);
@@ -246,7 +368,11 @@ document.addEventListener('DOMContentLoaded', () => {
       lastX = x; lastY = y;
     }
 
-    function stop(e) {
+    function stop() {
+      if (draggingImage) {
+        draggingImage = false;
+        canvas.style.cursor = traceImage && !traceImage.hidden ? 'grab' : 'not-allowed';
+      }
       drawing = false;
     }
 
@@ -259,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // and listen for global mouseup to stop if release happens outside the canvas.
     canvas.addEventListener('mouseenter', (e) => {
       try {
+        if (currentTool === 'move') return;
         if (e.buttons && (e.buttons & 1)) {
           const [x, y] = getPos(e);
           lastX = x; lastY = y;

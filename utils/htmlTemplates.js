@@ -63,15 +63,22 @@ function renderPendingQuestion(question) {
                         <button type="button" class="btn btn-secondary tool-btn" data-tool="eraser" title="Eraser" aria-label="Eraser">
                             <span class="emoji-icon" aria-hidden="true">🧽</span>
                         </button>
+                        <button type="button" class="btn btn-secondary tool-btn" data-tool="move" title="Move image" aria-label="Move image">
+                            <span class="emoji-icon" aria-hidden="true">✋</span>
+                        </button>
                     </div>
                     <label class="control-item">Brush: <input type="range" min="1" max="30" value="4" class="brush-size"></label>
                     <label class="control-item">Color: <input type="color" value="#000000" class="brush-color"></label>
                     <button type="button" class="btn btn-secondary undo-canvas" title="Undo" aria-label="Undo">↶</button>
                     <button type="button" class="btn btn-secondary redo-canvas" title="Redo" aria-label="Redo">↷</button>
                     <button type="button" class="btn btn-secondary clear-canvas">Clear</button>
+                    <input type="file" class="trace-image-input" accept="image/*" hidden>
+                    <button type="button" class="btn btn-secondary import-trace-image">Import Image</button>
+                    <button type="button" class="btn btn-secondary remove-trace-image" disabled>Remove Image</button>
                 </div>
 
                 <div class="canvas-wrap">
+                    <img class="trace-image" alt="Tracing reference" hidden>
                     <canvas width="800" height="500"></canvas>
                 </div>
 
